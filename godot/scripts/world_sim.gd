@@ -88,7 +88,7 @@ func tick(dt: float) -> void:
 			continue
 		for v in e["voxels"]:
 			p["voxels"].append(v + Vector3i(int(e["pos"].x - p["pos"].x), int(e["pos"].y - p["pos"].y), int(e["pos"].z - p["pos"].z)))
-		if not VoxelShape.is_connected(p["voxels"]):
+		if not VoxelShape.is_shape_connected(p["voxels"]):
 			continue
 		p["recent"] = c["recent"]
 		p["resolved_key"] = c["key"]

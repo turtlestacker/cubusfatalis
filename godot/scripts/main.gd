@@ -1,7 +1,7 @@
 extends Node3D
 
-var sim := WorldSim.new()
-var meshes := {}
+var sim: WorldSim = WorldSim.new()
+var meshes: Dictionary = {}
 @onready var hud: Label = $CanvasLayer/HUD
 @onready var cam: Camera3D = $Camera3D
 
@@ -15,16 +15,16 @@ func _process(delta: float) -> void:
 	sim.tick(delta)
 	_render_all()
 	_update_hud()
-	var p := sim.player()
+	var p: Dictionary = sim.player()
 	if not p.is_empty():
 		cam.global_position = p["pos"] + Vector3(0, 16, 22)
 		cam.look_at(p["pos"], Vector3.UP)
 
 func _handle_input(delta: float) -> void:
-	var p := sim.player()
+	var p: Dictionary = sim.player()
 	if p.is_empty():
 		return
-	var speed := max(1.0, 4.0 - 0.05 * p["voxels"].size())
+	var speed: float = maxf(1.0, 4.0 - 0.05 * float(p["voxels"].size()))
 	var dir := Vector3.ZERO
 	if Input.is_key_pressed(KEY_W): dir.z += 1
 	if Input.is_key_pressed(KEY_S): dir.z -= 1
@@ -35,7 +35,7 @@ func _handle_input(delta: float) -> void:
 	if dir != Vector3.ZERO:
 		p["vel"] += dir.normalized() * speed * delta * 12.0
 	if Input.is_key_pressed(KEY_B):
-		var legal := VoxelShape.legal_removals(p["voxels"])
+		var legal: Array = VoxelShape.legal_removals(p["voxels"])
 		if not legal.is_empty():
 			p["voxels"].erase(legal[0])
 			p["vel"] *= 1.04
@@ -62,8 +62,8 @@ func _render_all() -> void:
 			if e["is_player"]:
 				mat.albedo_color = Color(0.25, 0.85, 1.0)
 			else:
-				var p := sim.player()
-				var edible := (not p.is_empty()) and p["voxels"].size() > e["voxels"].size() and Harmonics.can_add(p["recent"], e["note"], p["resolved_key"])["ok"]
+				var p: Dictionary = sim.player()
+				var edible: bool = (not p.is_empty()) and p["voxels"].size() > e["voxels"].size() and bool(Harmonics.can_add(p["recent"], e["note"], p["resolved_key"])["ok"])
 				mat.albedo_color = Color(0.9, 0.25, 0.2) if not edible else Color(0.2, 1.0, 0.35)
 				mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 				mat.albedo_color.a = 0.35 if not edible else 1.0
@@ -71,7 +71,7 @@ func _render_all() -> void:
 			root.add_child(mi)
 
 func _update_hud() -> void:
-	var p := sim.player()
+	var p: Dictionary = sim.player()
 	if p.is_empty():
 		hud.text = "Player dead"
 		return
@@ -80,8 +80,8 @@ func _update_hud() -> void:
 		if e["is_player"]:
 			continue
 		if e["pos"].distance_to(p["pos"]) < 8.0:
-			var c := Harmonics.can_add(p["recent"], e["note"], p["resolved_key"])
-			var edible := p["voxels"].size() > e["voxels"].size() and c["ok"]
+			var c: Dictionary = Harmonics.can_add(p["recent"], e["note"], p["resolved_key"])
+			var edible: bool = p["voxels"].size() > e["voxels"].size() and bool(c["ok"])
 			near.append("%s v%d %s key:%s" % [e["name"], e["voxels"].size(), "EDIBLE" if edible else "WASHED", c["key"]])
 	near.sort()
 	hud.text = "CubusFatalis Godot Demo\nWASD/RF move, B boost\nTime %.1f Vol %d Score %.2f\nKey %s Recent %s\nNearby:\n%s" % [
@@ -89,7 +89,7 @@ func _update_hud() -> void:
 		p["voxels"].size(),
 		p["score"],
 		p["resolved_key"],
-		str(p["recent"].map(func(i): return Harmonics.NOTES[i])),
+		str(p["recent"].map(func(i: int) -> String: return Harmonics.NOTES[i])),
 		"\n".join(near.slice(0, 8))
 	]
 
