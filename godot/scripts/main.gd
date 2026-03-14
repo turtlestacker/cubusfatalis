@@ -3,6 +3,10 @@ extends Node3D
 var sim: WorldSim = WorldSim.new()
 var meshes: Dictionary = {}
 
+var x_cam: Camera3D
+var y_cam: Camera3D
+var z_cam: Camera3D
+
 @onready var hud: Label = $CanvasLayer/HUD
 @onready var cam: Camera3D = $Camera3D
 @onready var x_view: SubViewport = $CanvasLayer/AxisViews/XPanel/VBox/XView/SubViewport
@@ -13,6 +17,7 @@ func _ready() -> void:
 	sim.spawn_player("Corner")
 	sim.fill_npmcs()
 	_setup_axis_cameras()
+	_spawn_reference_grids()
 	_render_all()
 
 func _process(delta: float) -> void:
@@ -23,6 +28,7 @@ func _process(delta: float) -> void:
 	if not p.is_empty():
 		cam.global_position = p["pos"] + Vector3(0, 16, 22)
 		cam.look_at(p["pos"], Vector3.UP)
+		_update_axis_cameras(Vector3(p["pos"]))
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey):
@@ -46,32 +52,68 @@ func _unhandled_input(event: InputEvent) -> void:
 		sim.boost_player()
 
 func _setup_axis_cameras() -> void:
-	var x_cam := Camera3D.new()
+	x_view.world_3d = get_viewport().world_3d
+	y_view.world_3d = get_viewport().world_3d
+	z_view.world_3d = get_viewport().world_3d
+
+	x_cam = Camera3D.new()
 	x_cam.projection = Camera3D.PROJECTION_ORTHOGONAL
-	x_cam.size = 35.0
-	x_cam.position = Vector3(60, 0, 0)
-	x_cam.look_at(Vector3.ZERO, Vector3.UP)
+	x_cam.size = 28.0
 	x_view.add_child(x_cam)
 	x_cam.current = true
-	x_view.world_3d = get_viewport().world_3d
 
-	var y_cam := Camera3D.new()
+	y_cam = Camera3D.new()
 	y_cam.projection = Camera3D.PROJECTION_ORTHOGONAL
-	y_cam.size = 35.0
-	y_cam.position = Vector3(0, 60, 0)
-	y_cam.look_at(Vector3.ZERO, Vector3.BACK)
+	y_cam.size = 28.0
 	y_view.add_child(y_cam)
 	y_cam.current = true
-	y_view.world_3d = get_viewport().world_3d
 
-	var z_cam := Camera3D.new()
+	z_cam = Camera3D.new()
 	z_cam.projection = Camera3D.PROJECTION_ORTHOGONAL
-	z_cam.size = 35.0
-	z_cam.position = Vector3(0, 0, 60)
-	z_cam.look_at(Vector3.ZERO, Vector3.UP)
+	z_cam.size = 28.0
 	z_view.add_child(z_cam)
 	z_cam.current = true
-	z_view.world_3d = get_viewport().world_3d
+
+	_update_axis_cameras(Vector3.ZERO)
+
+func _update_axis_cameras(center: Vector3) -> void:
+	x_cam.global_position = center + Vector3(40, 0, 0)
+	x_cam.look_at(center, Vector3.UP)
+
+	y_cam.global_position = center + Vector3(0, 40, 0)
+	y_cam.look_at(center, Vector3.FORWARD)
+
+	z_cam.global_position = center + Vector3(0, 0, 40)
+	z_cam.look_at(center, Vector3.UP)
+
+func _spawn_reference_grids() -> void:
+	var grid_xy := MeshInstance3D.new()
+	grid_xy.mesh = PlaneMesh.new()
+	grid_xy.rotation_degrees = Vector3(-90, 0, 0)
+	grid_xy.scale = Vector3(8, 8, 8)
+	grid_xy.material_override = _grid_material(Color(0.35, 0.35, 0.5, 0.25))
+	add_child(grid_xy)
+
+	var grid_yz := MeshInstance3D.new()
+	grid_yz.mesh = PlaneMesh.new()
+	grid_yz.rotation_degrees = Vector3(0, 90, 0)
+	grid_yz.scale = Vector3(8, 8, 8)
+	grid_yz.material_override = _grid_material(Color(0.35, 0.5, 0.35, 0.2))
+	add_child(grid_yz)
+
+	var grid_xz := MeshInstance3D.new()
+	grid_xz.mesh = PlaneMesh.new()
+	grid_xz.scale = Vector3(8, 8, 8)
+	grid_xz.material_override = _grid_material(Color(0.5, 0.35, 0.35, 0.2))
+	add_child(grid_xz)
+
+func _grid_material(color: Color) -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = color
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return mat
 
 func _render_all() -> void:
 	for k in meshes.keys():

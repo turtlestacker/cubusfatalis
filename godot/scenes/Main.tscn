@@ -52,6 +52,7 @@ stretch = true
 size = Vector2i(512, 300)
 render_target_update_mode = 4
 transparent_bg = false
+disable_3d = false
 
 [node name="XPanel2" type="PanelContainer" parent="CanvasLayer/AxisViews"]
 size_flags_horizontal = 3
@@ -71,6 +72,7 @@ stretch = true
 size = Vector2i(512, 300)
 render_target_update_mode = 4
 transparent_bg = false
+disable_3d = false
 
 [node name="XPanel3" type="PanelContainer" parent="CanvasLayer/AxisViews"]
 size_flags_horizontal = 3
@@ -90,3 +92,4 @@ stretch = true
 size = Vector2i(512, 300)
 render_target_update_mode = 4
 transparent_bg = false
+disable_3d = false
