@@ -1,29 +1,31 @@
 # CubusFatalis — First Playable Demo (Godot 4)
 
-You are right: the spec + tech stack target **Godot 4** for the first playable.
-This repository now includes a Godot-native first demo.
+This demo is now Godot-native and includes a **4-view layout**:
+- 1 large perspective gameplay view
+- 3 lower orthographic aligned views (X, Y, Z)
 
 ## Run
 
-1. Install **Godot 4.x**.
-2. Open this repository as a Godot project (it contains `project.godot`).
+1. Install **Godot 4.6.x** (or current 4.x stable).
+2. Open this repository as a Godot project (contains `project.godot`).
 3. Run the main scene (`res://godot/scenes/Main.tscn`).
+
+## Controls (discrete / grid-step movement)
+
+Movement is **discrete**, one unit per key press (Tetris-like stepping):
+- `A / D`: `-X / +X`
+- `R / F`: `+Y / -Y`
+- `W / S`: `+Z / -Z`
+- `B`: boost (sheds one legal surface cube)
 
 ## Current demo scope
 
-- 3D bounded arena
-- player voxel-body starter shape
-- passive drifting NPMCs
-- consume gating by size + harmonic compatibility
+- Bounded 3D arena
+- Player voxel-body starter shape
+- Passive drifting NPMCs
+- Consume gating by size + harmonic compatibility
 - 12 major/minor harmonic compatibility checks
-- last-4-unique-note harmonic window
-- metabolism attrition (`24 / sqrt(volume)`)
-- boost action with cube shedding
-- contextual edible-vs-washed coloring
-- HUD with resolved key, recent notes, score, volume, and nearby targets
-
-## Controls
-
-- `W/A/S/D`: move on X/Z
-- `R/F`: move up/down (Y)
-- `B`: boost (sheds legal surface cube)
+- Last-4-unique-note harmonic window
+- Metabolism attrition (`24 / sqrt(volume)`)
+- Contextual edible-vs-washed coloring
+- HUD with resolved key, recent notes, score, volume, nearby entities

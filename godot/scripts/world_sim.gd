@@ -43,6 +43,24 @@ func player() -> Dictionary:
 			return e
 	return {}
 
+func move_player_discrete(step: Vector3i) -> void:
+	var p: Dictionary = player()
+	if p.is_empty():
+		return
+	var next := p["pos"] + Vector3(step.x, step.y, step.z)
+	next.x = clamp(next.x, -arena_half, arena_half)
+	next.y = clamp(next.y, -arena_half, arena_half)
+	next.z = clamp(next.z, -arena_half, arena_half)
+	p["pos"] = next
+
+func boost_player() -> void:
+	var p: Dictionary = player()
+	if p.is_empty():
+		return
+	var legal: Array = VoxelShape.legal_removals(p["voxels"])
+	if not legal.is_empty():
+		p["voxels"].erase(legal[0])
+
 func fill_npmcs(target := 18) -> void:
 	var npmc_count := 0
 	for e in entities:
@@ -67,6 +85,8 @@ func tick(dt: float) -> void:
 	elapsed += dt
 	fill_npmcs()
 	for e in entities:
+		if e["is_player"]:
+			continue
 		e["pos"] += e["vel"] * dt
 		e["vel"] *= 0.995
 		e["pos"].x = clamp(e["pos"].x, -arena_half, arena_half)

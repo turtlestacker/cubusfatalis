@@ -2,16 +2,20 @@ extends Node3D
 
 var sim: WorldSim = WorldSim.new()
 var meshes: Dictionary = {}
+
 @onready var hud: Label = $CanvasLayer/HUD
 @onready var cam: Camera3D = $Camera3D
+@onready var x_view: SubViewport = $CanvasLayer/AxisViews/XPanel/VBox/XView/SubViewport
+@onready var y_view: SubViewport = $CanvasLayer/AxisViews/XPanel2/VBox/YView/SubViewport
+@onready var z_view: SubViewport = $CanvasLayer/AxisViews/XPanel3/VBox/ZView/SubViewport
 
 func _ready() -> void:
 	sim.spawn_player("Corner")
 	sim.fill_npmcs()
+	_setup_axis_cameras()
 	_render_all()
 
 func _process(delta: float) -> void:
-	_handle_input(delta)
 	sim.tick(delta)
 	_render_all()
 	_update_hud()
@@ -20,25 +24,54 @@ func _process(delta: float) -> void:
 		cam.global_position = p["pos"] + Vector3(0, 16, 22)
 		cam.look_at(p["pos"], Vector3.UP)
 
-func _handle_input(delta: float) -> void:
-	var p: Dictionary = sim.player()
-	if p.is_empty():
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventKey):
 		return
-	var speed: float = maxf(1.0, 4.0 - 0.05 * float(p["voxels"].size()))
-	var dir := Vector3.ZERO
-	if Input.is_key_pressed(KEY_W): dir.z += 1
-	if Input.is_key_pressed(KEY_S): dir.z -= 1
-	if Input.is_key_pressed(KEY_A): dir.x -= 1
-	if Input.is_key_pressed(KEY_D): dir.x += 1
-	if Input.is_key_pressed(KEY_R): dir.y += 1
-	if Input.is_key_pressed(KEY_F): dir.y -= 1
-	if dir != Vector3.ZERO:
-		p["vel"] += dir.normalized() * speed * delta * 12.0
-	if Input.is_key_pressed(KEY_B):
-		var legal: Array = VoxelShape.legal_removals(p["voxels"])
-		if not legal.is_empty():
-			p["voxels"].erase(legal[0])
-			p["vel"] *= 1.04
+	var key_event: InputEventKey = event
+	if not key_event.pressed or key_event.echo:
+		return
+	if key_event.keycode == KEY_A:
+		sim.move_player_discrete(Vector3i(-1, 0, 0))
+	elif key_event.keycode == KEY_D:
+		sim.move_player_discrete(Vector3i(1, 0, 0))
+	elif key_event.keycode == KEY_R:
+		sim.move_player_discrete(Vector3i(0, 1, 0))
+	elif key_event.keycode == KEY_F:
+		sim.move_player_discrete(Vector3i(0, -1, 0))
+	elif key_event.keycode == KEY_W:
+		sim.move_player_discrete(Vector3i(0, 0, 1))
+	elif key_event.keycode == KEY_S:
+		sim.move_player_discrete(Vector3i(0, 0, -1))
+	elif key_event.keycode == KEY_B:
+		sim.boost_player()
+
+func _setup_axis_cameras() -> void:
+	var x_cam := Camera3D.new()
+	x_cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+	x_cam.size = 35.0
+	x_cam.position = Vector3(60, 0, 0)
+	x_cam.look_at(Vector3.ZERO, Vector3.UP)
+	x_view.add_child(x_cam)
+	x_cam.current = true
+	x_view.world_3d = get_viewport().world_3d
+
+	var y_cam := Camera3D.new()
+	y_cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+	y_cam.size = 35.0
+	y_cam.position = Vector3(0, 60, 0)
+	y_cam.look_at(Vector3.ZERO, Vector3.BACK)
+	y_view.add_child(y_cam)
+	y_cam.current = true
+	y_view.world_3d = get_viewport().world_3d
+
+	var z_cam := Camera3D.new()
+	z_cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+	z_cam.size = 35.0
+	z_cam.position = Vector3(0, 0, 60)
+	z_cam.look_at(Vector3.ZERO, Vector3.UP)
+	z_view.add_child(z_cam)
+	z_cam.current = true
+	z_view.world_3d = get_viewport().world_3d
 
 func _render_all() -> void:
 	for k in meshes.keys():
@@ -84,13 +117,14 @@ func _update_hud() -> void:
 			var edible: bool = p["voxels"].size() > e["voxels"].size() and bool(c["ok"])
 			near.append("%s v%d %s key:%s" % [e["name"], e["voxels"].size(), "EDIBLE" if edible else "WASHED", c["key"]])
 	near.sort()
-	hud.text = "CubusFatalis Godot Demo\nWASD/RF move, B boost\nTime %.1f Vol %d Score %.2f\nKey %s Recent %s\nNearby:\n%s" % [
-		sim.elapsed,
+	hud.text = "CubusFatalis 4-View Demo\nDiscrete Grid Steps: A/D (X), R/F (Y), W/S (Z), B boost\nPos %s  Vol %d  Score %.2f  Time %.1f\nKey %s Recent %s\nNearby:\n%s" % [
+		str(p["pos"]),
 		p["voxels"].size(),
 		p["score"],
+		sim.elapsed,
 		p["resolved_key"],
 		str(p["recent"].map(func(i: int) -> String: return Harmonics.NOTES[i])),
-		"\n".join(near.slice(0, 8))
+		"\n".join(near.slice(0, 6))
 	]
 
 func _entity_exists(name: String) -> bool:
