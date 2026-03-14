@@ -70,7 +70,7 @@ You begin as a small drifting organism made of cubes. You hear yourself as a not
 
 ### 5.1 Space
 
-The world is a 3D arena. Position and movement are continuous, but each organism’s body is represented on a **unit voxel grid** in local space.
+The world is a 3D arena. For the current local demo with four aligned views, both body voxels **and world-space entity positions** are snapped to a **unit grid** so cube edges remain aligned in all views.
 
 For the local demo, use a **bounded cubic arena**.
 
@@ -78,6 +78,10 @@ Recommended behavior:
 - soft visible boundaries
 - no wraparound in MVP
 - light return force or collision buffer at edges if needed
+
+Local demo note:
+- player movement is discrete (one grid step per input)
+- NPMCs may drift, but their world positions are re-snapped to grid each tick to keep edge alignment
 
 ### 5.2 Entity representation
 

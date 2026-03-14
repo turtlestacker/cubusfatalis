@@ -72,7 +72,7 @@ func fill_npmcs(target := 18) -> void:
 			"name": "NPMC-%d" % entities.size(),
 			"is_player": false,
 			"voxels": NPMC_SHAPES[int(rng.randi() % NPMC_SHAPES.size())].duplicate(),
-			"pos": Vector3(rng.randf_range(-16,16), rng.randf_range(-16,16), rng.randf_range(-16,16)),
+			"pos": Vector3(round(rng.randf_range(-16,16)), round(rng.randf_range(-16,16)), round(rng.randf_range(-16,16))),
 			"vel": Vector3(rng.randf_range(-1,1), rng.randf_range(-1,1), rng.randf_range(-1,1)),
 			"note": note,
 		})
@@ -92,6 +92,7 @@ func tick(dt: float) -> void:
 		e["pos"].x = clamp(e["pos"].x, -arena_half, arena_half)
 		e["pos"].y = clamp(e["pos"].y, -arena_half, arena_half)
 		e["pos"].z = clamp(e["pos"].z, -arena_half, arena_half)
+		e["pos"] = Vector3(round(e["pos"].x), round(e["pos"].y), round(e["pos"].z))
 	var p := player()
 	if p.is_empty():
 		return
