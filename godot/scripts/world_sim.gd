@@ -47,7 +47,7 @@ func move_player_discrete(step: Vector3i) -> void:
 	var p: Dictionary = player()
 	if p.is_empty():
 		return
-	var next := p["pos"] + Vector3(step.x, step.y, step.z)
+	var next: Vector3 = Vector3(p["pos"]) + Vector3(step.x, step.y, step.z)
 	next.x = clamp(next.x, -arena_half, arena_half)
 	next.y = clamp(next.y, -arena_half, arena_half)
 	next.z = clamp(next.z, -arena_half, arena_half)
