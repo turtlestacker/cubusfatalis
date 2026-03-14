@@ -70,7 +70,7 @@ You begin as a small drifting organism made of cubes. You hear yourself as a not
 
 ### 5.1 Space
 
-The world is a 3D arena. Position and movement are continuous, but each organism’s body is represented on a **unit voxel grid** in local space.
+The world is a 3D arena. For the current local demo with four aligned views, both body voxels **and world-space entity positions** are snapped to a **unit grid** so cube edges remain aligned in all views.
 
 For the local demo, use a **bounded cubic arena**.
 
@@ -78,6 +78,10 @@ Recommended behavior:
 - soft visible boundaries
 - no wraparound in MVP
 - light return force or collision buffer at edges if needed
+
+Local demo note:
+- player movement is discrete (one grid step per input)
+- NPMCs may drift, but their world positions are re-snapped to grid each tick to keep edge alignment
 
 ### 5.2 Entity representation
 
@@ -239,7 +243,21 @@ Recommended local demo camera:
 - transparency/cutaway on occlusion
 - always-visible axis indicator/gizmo
 
-### 8.5 Maneuverability scaling
+### 8.5 Four-view readability layout (local demo option)
+
+For the first playable, a **4-view presentation** is recommended as a readability aid:
+- one large perspective gameplay view (top)
+- three smaller orthographic aligned views (bottom row):
+  - X-aligned (shows Y/Z plane)
+  - Y-aligned (shows X/Z plane)
+  - Z-aligned (shows X/Y plane)
+
+Each orthographic panel should:
+- include a visible non-perspective grid
+- display the movement keys for its controlled axis
+- track the player center so nearby consume opportunities remain visible
+
+### 8.6 Maneuverability scaling
 
 As volume increases:
 - acceleration decreases
