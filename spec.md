@@ -2,11 +2,11 @@
 
 ## 1. Overview
 
-**CubusFatalis** is a real-time 3D online action game played in voxel space. Each player controls a drifting connected polycube organism composed of unit cubes. Organisms grow by consuming smaller compatible shapes, shrink through metabolic attrition and emergency acceleration, and evolve musically as they absorb notes and rhythms.
+**CubusFatalis** is a real-time 2D online action game played on a tile grid. Each player controls a drifting connected polyomino organism composed of unit blocks. Organisms grow by consuming smaller compatible shapes, shrink through metabolic attrition and emergency acceleration, and evolve musically as they absorb notes and rhythms.
 
 The core promise is a playable fusion of:
 
-- 3D polycube navigation and assembly
+- 2D polyomino navigation and assembly
 - predator-prey scaling: bigger eats smaller
 - musical evolution through note accumulation
 - visual filtering that makes harmonic possibility readable at a glance
@@ -20,14 +20,14 @@ The long-term product direction is a **shared continuous online world with persi
 The game should feel:
 
 - **Readable**: the player can quickly tell what can be eaten, what is dangerous, and how their body is oriented.
-- **Embodied**: the player is the shape, not a ship carrying cubes.
+- **Embodied**: the player is the shape, not a ship carrying blocks.
 - **Musical**: note/key evolution materially changes the play space.
 - **Pressured**: metabolism and predators force ongoing movement and decisions.
 - **Expressive**: different shapes, harmonic paths, and risks create distinct runs.
 
 The first playable should optimize for:
 
-1. Clear 3D motion and camera understanding
+1. Clear 2D motion and camera understanding
 2. Satisfying consume / merge events
 3. Strong prey-vs-threat readability
 4. A harmonic system that feels strategic, not arbitrary
@@ -53,7 +53,7 @@ A local demo that proves the core loop.
 - 1 player
 - bounded arena
 - curated starter shapes
-- passive drifting NPMCs
+- drifting NPMCs (all non-player free blocks continuously move on the grid)
 - optionally 1 simple predator AI after base loop works
 - no online transport yet
 - code architecture should keep simulation state separable from future networking/state persistence
@@ -62,7 +62,7 @@ A local demo that proves the core loop.
 
 ## 4. Core fantasy
 
-You begin as a small drifting organism made of cubes. You hear yourself as a note and rhythm. Around you are other drifting forms: some edible, some dangerous, some irrelevant. You steer through 3D space, choosing prey not only for growth but for harmonic consequence. Each swallow changes your body and your soundtrack. The bigger you get, the hungrier you become. If you panic, you can burst away by sacrificing your own mass. Survival is an evolving geometric and musical negotiation.
+You begin as a small drifting organism made of blocks. You hear yourself as a note and rhythm. Around you are other drifting forms: some edible, some dangerous, some irrelevant. You steer across the 2D arena, choosing prey not only for growth but for harmonic consequence. Each swallow changes your body and your soundtrack. The bigger you get, the hungrier you become. If you panic, you can burst away by sacrificing your own mass. Survival is an evolving geometric and musical negotiation.
 
 ---
 
@@ -70,25 +70,30 @@ You begin as a small drifting organism made of cubes. You hear yourself as a not
 
 ### 5.1 Space
 
-The world is a 3D arena. Position and movement are continuous, but each organism’s body is represented on a **unit voxel grid** in local space.
+The world is a 2D arena. Position and movement are continuous, but each organism’s body is represented on a **unit tile grid** in local space.
 
-For the local demo, use a **bounded cubic arena**.
+For the local demo, use a **bounded square arena**.
 
 Recommended behavior:
 - soft visible boundaries
 - no wraparound in MVP
 - light return force or collision buffer at edges if needed
 
+
+Global motion rule for MVP:
+- every non-player free entity (NPMCs and future loose AI organisms) must always have non-zero drift and continue moving on the grid unless blocked, merged, or destroyed
+- stationary ambient food is out of scope for this version
+
 ### 5.2 Entity representation
 
 Each organism/NPMC stores:
-- local-space occupied voxel coordinates
+- local-space occupied tile coordinates
 - world position
-- orientation
+- orientation (0°/90°/180°/270°)
 - linear velocity
-- angular velocity or simplified tumble state
-- volume (cube count)
-- cached surface cubes
+- turn state
+- volume (block count)
+- cached surface blocks
 - musical state
 - visual state
 
@@ -110,24 +115,24 @@ This applies to:
 
 ### 6.1 Player organism
 
-The player controls a connected cavity-free polycube organism.
+The player controls a connected hole-free polyomino organism.
 
 Properties:
-- curated starter shape within a **3×3×3** bounding box
+- curated starter shape within a **3×3** bounding box
 - starting volume limited to a curated range
 - dynamic body geometry
 - metabolism
-- emergency acceleration by shedding cubes
+- emergency acceleration by shedding blocks
 - harmonic reinterpretation over time
 - layered music
 - scoring participation
 
-### 6.2 NPMC — Non-Playable Music Cube
+### 6.2 NPMC — Non-Playable Music Block
 
-NPMCs are simple drifting musical resource entities.
+NPMCs are simple drifting musical resource entities that continuously move on the grid.
 
 Properties:
-- connected cavity-free shape constrained to a **2×2×2** bounding box
+- connected hole-free shape constrained to a **2×2** bounding box
 - fixed size until consumed
 - fixed note until consumed
 - fixed rhythm until consumed
@@ -152,7 +157,7 @@ Not required for the first prototype, but the architecture should support future
 
 ### 7.1 Starter shape policy
 
-Do **not** allow arbitrary 3×3×3 shapes. Use a curated roster.
+Do **not** allow arbitrary 3×3 shapes. Use a curated roster.
 
 Recommended local demo roster:
 - 4–6 shapes initially
@@ -161,7 +166,7 @@ Recommended local demo roster:
 ### 7.2 Starting volume
 
 Recommended MVP starting volume:
-- **5 or 6 cubes**
+- **5 or 6 blocks**
 
 Rationale:
 - enough shape identity to matter
@@ -194,19 +199,19 @@ This is the highest-risk system and should be optimized for clarity over simulat
 ### 8.1 Movement model
 
 Use a hybrid inertial drift model:
-- the player drifts continuously in 3D
-- thrust modifies velocity
-- brake reduces velocity
-- rotation changes orientation independently
+- the player drifts continuously in 2D
+- WASD input applies directional thrust on the grid
+- no input allows momentum to decay with light drag (soft brake)
+- rotation changes orientation (0°/90°/180°/270°) independently
 - shape size reduces maneuverability
 
 ### 8.2 Control goals
 
 The player must be able to:
-- travel through 3D space comfortably
+- travel across the 2D arena comfortably
 - intentionally approach prey
 - evade predators
-- understand current orientation
+- understand current orientation (0°/90°/180°/270°)
 - make docking decisions without wrestling the camera
 
 ### 8.3 Recommended control scheme
@@ -214,13 +219,13 @@ The player must be able to:
 Use a **hybrid control model**.
 
 #### Travel mode
-- smooth thrust
-- smooth yaw/pitch control
-- optional roll
-- forgiving camera follow
+- **W/A/S/D** moves the player organism on the 2D grid
+- movement has inertial drift (tap for micro-adjustment, hold for commits)
+- **Space** rotates the organism in 90° increments
+- camera remains centered and readable during motion
 
 #### Precision mode
-Activated by holding a modifier button.
+Activated by holding a modifier button (optional for MVP).
 
 In precision mode:
 - time may slightly slow in local demo if needed
@@ -228,16 +233,16 @@ In precision mode:
 - candidate contact faces preview clearly
 - a ghosted merge preview appears when near legal consume opportunities
 
-This preserves the feeling of 3D motion while making voxel alignment practical.
+This preserves the feeling of 2D motion while making grid alignment practical.
 
 ### 8.4 Camera
 
 Recommended local demo camera:
-- third-person follow camera
-- soft auto-leveling
+- top-down follow camera
+- stable orthographic framing
 - target assistance when near relevant prey/threats
 - transparency/cutaway on occlusion
-- always-visible axis indicator/gizmo
+- always-visible facing indicator/gizmo
 
 ### 8.5 Maneuverability scaling
 
@@ -419,14 +424,14 @@ Minimal but important HUD:
 
 ### 12.1 Collision basis
 
-Use voxel-informed collision with simple broad-phase approximation for performance.
+Use grid-informed collision with simple broad-phase approximation for performance.
 
 ### 12.2 Face-contact rule
 
-A consume attempt is only considered on **face-to-face** contact.
+A consume attempt is only considered on **edge-to-edge** contact.
 
-- edge contact does nothing
-- corner contact does nothing
+- corner-only contact does nothing
+- overlap without valid approach does nothing
 
 ### 12.3 Size rule
 
@@ -447,7 +452,7 @@ Use **Option 1** for geometry transfer:
 A consume only succeeds if the merged body would be:
 - connected
 - non-overlapping
-- cavity-free
+- hole-free
 
 If the full union is illegal, the consume fails.
 
@@ -475,13 +480,13 @@ Recommended MVP formula:
 **Attrition interval = 24 / sqrt(volume) seconds**
 
 At each interval:
-- remove 1 legal surface cube
+- remove 1 legal surface block
 
 Examples:
-- 4 cubes -> every 12s
-- 9 cubes -> every 8s
-- 16 cubes -> every 6s
-- 25 cubes -> every 4.8s
+- 4 blocks -> every 12s
+- 9 blocks -> every 8s
+- 16 blocks -> every 6s
+- 25 blocks -> every 4.8s
 
 ### 13.2 Purpose of metabolism
 
@@ -491,20 +496,20 @@ Metabolism:
 - keeps the ecosystem active
 - makes growth meaningful but costly
 
-### 13.3 Legal removable cube
+### 13.3 Legal removable block
 
-A removable cube must:
+A removable block must:
 - be on the surface
 - leave the body connected if removed
 - not create illegal post-removal geometry
 
-### 13.4 Cube removal selection
+### 13.4 Block removal selection
 
 For the demo, avoid pure randomness if it frequently creates ugly, frustrating bodies.
 
 Recommended approach:
-- select from legal surface cubes
-- add light weighting away from removing structurally critical cubes
+- select from legal surface blocks
+- add light weighting away from removing structurally critical blocks
 - preserve readability and controllability where possible
 
 ### 13.5 Emergency acceleration
@@ -516,15 +521,15 @@ Effect:
 - consumes body volume as cost
 
 Recommended MVP rule:
-- while boosting, remove **1 legal surface cube** at fixed short intervals
+- while boosting, remove **1 legal surface block** at fixed short intervals
 - the organism gains a burst of speed and/or maneuver response
 
 ### 13.6 Failure state under shrinkage
 
-If the player can no longer remove legal cubes or falls below the minimum viable volume, the organism dies.
+If the player can no longer remove legal blocks or falls below the minimum viable volume, the organism dies.
 
 Recommended minimum viable volume for MVP:
-- test **3 cubes** first
+- test **3 blocks** first
 
 ---
 
@@ -586,16 +591,16 @@ The loop should create a feeling of mounting musical urgency and bodily instabil
 - bounded arena
 - one controllable player organism
 - 4–6 curated starter shapes
-- NPMCs spawning randomly in the arena
+- NPMCs spawning randomly in the arena and always moving unless merged
 - uniform 12-note distribution for NPMCs
 - recent-note-window harmonic legality over 12 major + 12 minor
 - vivid prey highlighting with result-key color
 - washout for non-consumables
 - metabolism using the selected formula
-- emergency accelerate with cube shedding
+- emergency accelerate with block shedding
 - layered sound on consume
 - score tracking
-- polished camera/orientation readability
+- polished camera/orientation (0°/90°/180°/270°) readability
 
 ### 16.2 Nice-to-have after core is fun
 
@@ -657,14 +662,14 @@ For MVP, do not persist the in-run body. Persisted identity is a future system.
 
 ## 18. Open risks and chosen mitigations
 
-### 18.1 3D readability risk
+### 18.1 2D readability risk
 
-**Risk**: players get lost in rotation/camera complexity.
+**Risk**: players get lost in dense-grid readability and facing clarity.
 
 **Mitigation**:
-- third-person follow camera
-- precision mode with snap rotation
-- axis gizmo
+- top-down follow camera
+- space-bar snap rotation and clear heading indicator
+- facing gizmo
 - strong context-sensitive target rendering
 - small arena and low speed early on
 
@@ -701,7 +706,7 @@ For MVP, do not persist the in-run body. Persisted identity is a future system.
 **Risk**: random shedding creates frustrating unreadable bodies.
 
 **Mitigation**:
-- weighted legal-cube removal rather than purely random removal
+- weighted legal-block removal rather than purely random removal
 - curated starter/NPMC shapes
 
 ---
@@ -709,8 +714,8 @@ For MVP, do not persist the in-run body. Persisted identity is a future system.
 ## 19. Implementation order
 
 ### Phase 1 — Body and world fundamentals
-- voxel body representation
-- shape validity and surface-cube caching
+- tile-body representation
+- shape validity and surface-block caching
 - bounded arena and simple drift
 - player camera and movement
 
@@ -757,17 +762,19 @@ The local demo is successful if playtests show that:
 
 ## 21. Concise MVP rules reference
 
-- Player starts as a curated 3×3×3 cavity-free sub-shape of 5–6 cubes
-- NPMCs spawn as passive cavity-free 2×2×2 sub-shapes
+- Player starts as a curated 3×3 hole-free sub-shape of 5–6 blocks
+- NPMCs spawn as moving hole-free 2×2 sub-shapes
+- All non-player free entities continuously move on the grid unless blocked, merged, or destroyed
+- Player locomotion is **W/A/S/D**; **Space** rotates the main organism in 90° increments
 - NPMC note distribution is uniform across the 12 pitch classes
 - Only 12 major and 12 minor keys are valid harmonic states
 - Only the last 4 unique pitch classes count for prey legality and key resolution
 - A target is edible only if it is smaller and adding its note preserves at least one valid key
-- If a consume succeeds, the full prey geometry is merged if the union is legal and cavity-free
+- If a consume succeeds, the full prey geometry is merged if the union is legal and hole-free
 - Consumer scores 0.5 × prey volume for full organisms; NPMCs score lower
 - Consumed player scores 1.0 × their final volume
-- Player loses 1 legal surface cube every `24 / sqrt(volume)` seconds
-- Player may accelerate by shedding legal surface cubes for burst movement
+- Player loses 1 legal surface block every `24 / sqrt(volume)` seconds
+- Player may accelerate by shedding legal surface blocks for burst movement
 - Edible targets are vividly colored by the resulting resolved key
 - Irrelevant targets are washed out; dangerous predators remain strongly highlighted
 
@@ -775,4 +782,4 @@ The local demo is successful if playtests show that:
 
 ## 22. One-sentence game statement
 
-**CubusFatalis is a 3D online survival growth game where drifting voxel organisms consume harmonically compatible prey, mutate their musical identity, and fight metabolism and predators in a world where geometry and key determine what they can become.**
+**CubusFatalis is a 2D online survival growth game where drifting grid organisms consume harmonically compatible prey, mutate their musical identity, and fight metabolism and predators in a world where movement, geometry, and key determine what they can become.**
